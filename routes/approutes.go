@@ -2,10 +2,9 @@ package routes
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 
-	. "github.com/gautamhitesh/kredxapi/models"
+	"github.com/gautamhitesh/kredxapi/middleware"
 )
 
 func HelloWorld(w http.ResponseWriter, r *http.Request) {
@@ -13,35 +12,47 @@ func HelloWorld(w http.ResponseWriter, r *http.Request) {
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(r)
-	// username := vars["username"]
-	reqBody, _ := io.ReadAll(r.Body)
-	var user User
-	json.Unmarshal(reqBody, &user)
-
-	json.NewEncoder(w).Encode(user.Username + " Signed Up")
+	middleware.SignUp(w, r)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	middleware.LoginHandler(w, r)
 
-	reqBody, _ := io.ReadAll(r.Body)
-	var user User
-	json.Unmarshal(reqBody, &user)
-
-	json.NewEncoder(w).Encode(user.Username + " Logged in!")
+	// json.NewEncoder(w).Encode(user.Username + " Logged in!")
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode("Logged out!")
+	middleware.LogoutHandler(w, r)
+	// json.NewEncoder(w).Encode("Logged out!")
 }
 
 func Lend(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode("Lent!")
+	if middleware.BasicAuth(r) {
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode("Lent")
+	} else {
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode("Please sign in to continue")
+	}
 }
 func Borrow(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode("Borrowed!")
+	if middleware.BasicAuth(r) {
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode("Borrowed")
+	} else {
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode("Please sign in to continue")
+	}
 }
 
 func Report(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode("Report!")
+	if middleware.BasicAuth(r) {
+		json.NewEncoder(w).Encode("Report")
+	}
+	w.WriteHeader(http.StatusForbidden)
+	json.NewEncoder(w).Encode("Please sign in to continue")
+}
+
+func SessionLogs(w http.ResponseWriter, r *http.Request) {
+	middleware.SessionLogs(w, r)
 }
